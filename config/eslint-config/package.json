@@ -5,7 +5,7 @@
   "files": [
     "library.js",
     "next.js",
-    "react-internal.js"
+    "node.js"
   ],
   "devDependencies": {
     "@rocketseat/eslint-config": "2.2.2",
