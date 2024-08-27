@@ -22,56 +22,76 @@ import { createOrganization } from './routes/orgs/create-organization'
 import { getMembership } from './routes/orgs/get-membership'
 import { getOrganization } from './routes/orgs/get-organization'
 import { getOrganizations } from './routes/orgs/get-organizations'
+import { shutdownOrganization } from './routes/orgs/shutdown-organization'
+import { updateOrganization } from './routes/orgs/update-organization'
 
-const app = fastify().withTypeProvider<ZodTypeProvider>()
+async function bootstrap() {
+  const app = fastify().withTypeProvider<ZodTypeProvider>()
 
-app.setSerializerCompiler(serializerCompiler)
-app.setValidatorCompiler(validatorCompiler)
+  // Serialização e validação dos dados
+  app.setSerializerCompiler(serializerCompiler)
+  app.setValidatorCompiler(validatorCompiler)
 
-app.setErrorHandler(errorHandler)
+  // Lida com erros
+  app.setErrorHandler(errorHandler)
 
-app.register(fastifySwagger, {
-  openapi: {
-    info: {
-      title: 'Next.js SaaS',
-      description: 'Full-stack SaaS app with multi-tenant & RBAC',
-      version: '1.0.0',
-    },
-    components: {
-      securitySchemes: {
-        bearerAuth: {
-          type: 'http',
-          scheme: 'bearer',
-          bearerFormat: 'JWT',
+  // Configuração Swagger
+  app.register(fastifySwagger, {
+    openapi: {
+      info: {
+        title: 'Next.js SaaS',
+        description: 'Full-stack SaaS app with multi-tenant & RBAC',
+        version: '1.0.0',
+      },
+      components: {
+        securitySchemes: {
+          bearerAuth: {
+            type: 'http',
+            scheme: 'bearer',
+            bearerFormat: 'JWT',
+          },
         },
       },
     },
-  },
-  transform: jsonSchemaTransform,
-})
+    transform: jsonSchemaTransform,
+  })
 
-app.register(fastifySwaggerUI, {
-  routePrefix: '/docs',
-})
+  // Configuração UI do Swagger
+  app.register(fastifySwaggerUI, {
+    routePrefix: '/docs',
+  })
 
-app.register(fastifyJwt, {
-  secret: env.JWT_SECRET,
-})
+  // Configuração JWT
+  app.register(fastifyJwt, {
+    secret: env.JWT_SECRET,
+  })
 
-app.register(fastifyCors)
+  // Configuração CORS
+  app.register(fastifyCors, {
+    origin: '*',
+    methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  })
 
-app.register(createAccount)
-app.register(authenticateWithPassword)
-app.register(authenticateWithGithub)
-app.register(getProfile)
-app.register(requestPasswordRecover)
-app.register(resetPassword)
+  // Rotas de autenticação
+  app.register(createAccount)
+  app.register(authenticateWithPassword)
+  app.register(authenticateWithGithub)
+  app.register(getProfile)
+  app.register(requestPasswordRecover)
+  app.register(resetPassword)
 
-app.register(createOrganization)
-app.register(getMembership)
-app.register(getOrganization)
-app.register(getOrganizations)
+  // Rotas para organizações
+  app.register(createOrganization)
+  app.register(getMembership)
+  app.register(getOrganization)
+  app.register(getOrganizations)
+  app.register(updateOrganization)
+  app.register(shutdownOrganization)
 
-app.listen({ port: 3333 }).then(() => {
+  app.listen({ port: env.SERVER_PORT })
+}
+
+// Inicia o server
+bootstrap().then(() => {
   console.log('Server is running!')
 })
